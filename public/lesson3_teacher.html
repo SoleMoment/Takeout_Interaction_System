@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师控制台 - 第二课</title>
+    <style>
+        .task-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .task-tab {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 600;
+        }
+        .task-tab:hover {
+            background: #f5f5f5;
+            border-color: #f5576c;
+        }
+        .task-tab.active {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-color: #f5576c;
+        }
+        .task-data-section {
+            display: none;
+        }
+        .task-data-section.active {
+            display: block;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 28px; }
+        .header-stats { display: flex; gap: 30px; font-size: 14px; }
+        .header-stat { text-align: center; }
+        .header-stat .value { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        .controls { padding: 30px; background: #f9f9f9; border-bottom: 2px solid #ddd; }
+        .control-section h3 { margin-bottom: 15px; color: #f5576c; display: flex; align-items: center; gap: 10px; }
+        .task-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .task-control-card { background: white; border: 2px solid #ddd; border-radius: 10px; padding: 15px; }
+        .task-control-card.unlocked { border-color: #4caf50; background: #f1f8f4; }
+        .task-buttons { display: flex; gap: 8px; margin-top: 10px; }
+        .btn-small { flex: 1; padding: 8px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all 0.3s; }
+        .btn-unlock { background: #4caf50; color: white; }
+        .btn-lock { background: #f44336; color: white; }
+        .btn-timer { background: #ff9800; color: white; }
+        .countdown-display { margin-top: 8px; padding: 6px; background: #fff3e0; border-radius: 4px; text-align: center; font-weight: bold; color: #e65100; }
+        .content { padding: 30px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 25px; border-radius: 15px; }
+        .stat-card .value { font-size: 42px; font-weight: bold; margin: 10px 0; }
+        .students-table { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: #f5576c; color: white; }
+        th, td { padding: 15px; text-align: left; }
+        tbody tr:hover { background: #fff0f2; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .status-safe { background: #e8f5e9; color: #388e3c; }
+        .status-warning { background: #fff3e0; color: #f57c00; }
+        .status-danger { background: #ffebee; color: #c62828; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s; }
+        .btn-export { background: #2196f3; color: white; }
+        .online-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #4caf50; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+<script src="/websocket-client.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <h1>👨‍🏫 教师控制台 - 第二课：守护外卖账号</h1>
+                <p style="margin-top: 8px; opacity: 0.9;">监控学生安全意识学习情况</p>
+            </div>
+            <div class="header-stats">
+                <div class="header-stat"><div class="value" id="totalStudents">0</div><div>总学生数</div></div>
+                <div class="header-stat"><div class="value" id="safeStudents">0</div><div>安全学生</div></div>
+                <div class="header-stat"><div class="value" id="completionRate">0%</div><div>完成率</div></div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-section">
+                <h3>📋 任务控制 <span class="online-indicator"></span> <span style="font-size: 14px; font-weight: normal; color: #666;">实时连接</span></h3>
+                <div class="task-controls">
+                    <div class="task-control-card unlocked"><div style="font-weight: bold;">✓ 任务一：密码安全</div><div style="font-size: 12px; color: #4caf50;">默认解锁</div></div>
+                    <div class="task-control-card" id="card1">
+                        <div style="font-weight: bold;">🔒 任务二：识别陷阱</div>
+                        <div class="task-buttons">
+                            <button class="btn-small btn-unlock" onclick="unlockTask(1)">解锁</button>
+                            <button class="btn-small btn-lock" onclick="lockTask(1)" disabled>锁定</button>
+                        </div>
+                    </div>
+                    <div class="task-control-card" id="card2">
+                        <div style="font-weight: bold;">🔒 任务三：安全中心</div>
+                        <div class="task-buttons">
+                            <button class="btn-small btn-unlock" onclick="unlockTask(2)">解锁</button>
+                            <button class="btn-small btn-lock" onclick="lockTask(2)" disabled>锁定</button>
+                        </div>
+                    </div>
+                    <div class="task-control-card" id="card3">
+                        <div style="font-weight: bold;">🔒 任务四：自我评价</div>
+                        <div class="task-buttons">
+                            <button class="btn-small btn-unlock" onclick="unlockTask(3)">解锁</button>
+                            <button class="btn-small btn-lock" onclick="lockTask(3)" disabled>锁定</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-export" onclick="unlockAllTasks()">🔓 解锁所有</button>
+                <button class="btn btn-export" onclick="lockAllTasks()">🔒 锁定所有</button>
+                <button class="btn btn-export" onclick="exportData()">📊 导出数据</button>
+            </div> -->
+        </div>
+
+        <div class="content">
+            <!-- 任务选择器 -->
+            <div class="task-selector">
+                <div class="task-tab active" onclick="switchTaskView(0)">
+                    <div style="font-size: 24px; margin-bottom: 5px;">🔐</div>
+                    <div>任务一</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 3px;">密码安全</div>
+                </div>
+                <div class="task-tab" onclick="switchTaskView(1)">
+                    <div style="font-size: 24px; margin-bottom: 5px;">🎯</div>
+                    <div>任务二</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 3px;">识别陷阱</div>
+                </div>
+                <div class="task-tab" onclick="switchTaskView(2)">
+                    <div style="font-size: 24px; margin-bottom: 5px;">🛡️</div>
+                    <div>任务三</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 3px;">安全中心</div>
+                </div>
+                <div class="task-tab" onclick="switchTaskView(3)">
+                    <div style="font-size: 24px; margin-bottom: 5px;">🏆</div>
+                    <div>任务四</div>
+                    <div style="font-size: 12px; opacity: 0.8; margin-top: 3px;">自我评价</div>
+                </div>
+            </div>
+
+            <!-- 任务一数据 -->
+            <div class="task-data-section active" id="taskData0">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>🔑 已修改密码</h3>
+                        <div class="value" id="task1_passwordChanged">0</div>
+                        <div>修改率: <span id="task1_passwordPercent">0%</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>💪 强密码用户</h3>
+                        <div class="value" id="task1_strongPassword">0</div>
+                        <div>占比: <span id="task1_strongPercent">0%</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>⏱️ 平均用时</h3>
+                        <div class="value" id="task1_avgTime">0</div>
+                        <div>分钟</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🎯 完成率</h3>
+                        <div class="value" id="task1_completion">0%</div>
+                        <div>完成人数: <span id="task1_completedCount">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务二数据 -->
+            <div class="task-data-section" id="taskData1">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>🎯 识破陷阱</h3>
+                        <div class="value" id="task2_phishingIdentified">0</div>
+                        <div>识别率: <span id="task2_phishingPercent">0%</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>⚠️ 误判次数</h3>
+                        <div class="value" id="task2_mistakes">0</div>
+                        <div>平均: <span id="task2_avgMistakes">0</span> 次/人</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>📊 正确率</h3>
+                        <div class="value" id="task2_accuracy">0%</div>
+                        <div>防骗意识</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🎯 完成率</h3>
+                        <div class="value" id="task2_completion">0%</div>
+                        <div>完成人数: <span id="task2_completedCount">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务三数据 -->
+            <div class="task-data-section" id="taskData2">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>🛡️ 启用安全功能</h3>
+                        <div class="value" id="task3_securityUsers">0</div>
+                        <div>启用率: <span id="task3_securityPercent">0%</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>📊 平均功能数</h3>
+                        <div class="value" id="task3_avgFeatures">0</div>
+                        <div>总启用: <span id="task3_totalFeatures">0</span> 项</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>📝 测试得分</h3>
+                        <div class="value" id="task3_avgQuiz">0</div>
+                        <div>满分3分</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🎯 完成率</h3>
+                        <div class="value" id="task3_completion">0%</div>
+                        <div>完成人数: <span id="task3_completedCount">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 任务四数据 -->
+            <div class="task-data-section" id="taskData3">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>📝 已评价学生</h3>
+                        <div class="value" id="task4_ratedStudents">0</div>
+                        <div>评价率: <span id="task4_ratedPercent">0%</span></div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>⭐ 平均评分</h3>
+                        <div class="value" id="task4_avgRating">0</div>
+                        <div>总分: <span id="task4_totalRating">0</span> 星</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🛡️ 获得称号</h3>
+                        <div class="value" id="task4_achievers">0</div>
+                        <div>"安全卫士"(≥5星)</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🎯 完成率</h3>
+                        <div class="value" id="task4_completion">0%</div>
+                        <div>完成人数: <span id="task4_completedCount">0</span></div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px; padding: 25px; background: #f9f9f9; border-radius: 10px;">
+                    <h3>⭐ 评分分布</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 20px;">
+                        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">⭐</div>
+                            <div style="font-size: 36px; font-weight: bold; color: #f5576c; margin-bottom: 10px;" id="stars1">0</div>
+                            <div>获得1星</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">⭐⭐</div>
+                            <div style="font-size: 36px; font-weight: bold; color: #f5576c; margin-bottom: 10px;" id="stars2">0</div>
+                            <div>获得2星</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">⭐⭐⭐</div>
+                            <div style="font-size: 36px; font-weight: bold; color: #f5576c; margin-bottom: 10px;" id="stars3">0</div>
+                            <div>获得3星</div>
+                        </div>
+                        <div style="background: white; padding: 20px; border-radius: 10px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                            <div style="font-size: 48px; margin-bottom: 15px;">🎖️</div>
+                            <div style="font-size: 36px; font-weight: bold; color: #f5576c; margin-bottom: 10px;" id="starsAbove5">0</div>
+                            <div>总分≥5星</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let studentsData = new Map();
+        let taskStatus = [true, false, false, false];
+        // const channel = null // WebSocket替代;
+
+        window.classroomWS.onMessage((data) => {
+            if (data.type === 'student_data') {
+                studentsData.set(data.data.username || 'user_' + Date.now(), data.data);
+                updateDashboard();
+            }
+        });
+
+        function unlockTask(taskIndex) {
+            taskStatus[taskIndex] = true;
+            const card = document.getElementById(`card${taskIndex}`);
+            card.classList.add('unlocked');
+            card.querySelector('div').innerHTML = `✓ 任务${['二','三','四'][taskIndex-1]}`;
+            const buttons = card.querySelectorAll('.btn-small');
+            buttons[0].disabled = true;
+            buttons[1].disabled = false;
+            window.classroomWS.send({ type: 'unlock_task', taskIndex: taskIndex });
+        }
+
+        function lockTask(taskIndex) {
+            taskStatus[taskIndex] = false;
+            const card = document.getElementById(`card${taskIndex}`);
+            card.classList.remove('unlocked');
+            card.querySelector('div').innerHTML = `🔒 任务${['二','三','四'][taskIndex-1]}`;
+            const buttons = card.querySelectorAll('.btn-small');
+            buttons[0].disabled = false;
+            buttons[1].disabled = true;
+            window.classroomWS.send({ type: 'lock_task', taskIndex: taskIndex });
+        }
+
+        function unlockAllTasks() {
+            if (confirm('确定解锁所有任务？')) {
+                for (let i = 1; i <= 3; i++) if (!taskStatus[i]) unlockTask(i);
+            }
+        }
+
+        function lockAllTasks() {
+            if (confirm('确定锁定所有任务？')) {
+                for (let i = 1; i <= 3; i++) if (taskStatus[i]) lockTask(i);
+            }
+        }
+
+        // Task switching function
+        function switchTaskView(taskIndex) {
+            // Update tabs
+            document.querySelectorAll('.task-tab').forEach((tab, index) => {
+                if (index === taskIndex) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            // Update data sections
+            document.querySelectorAll('.task-data-section').forEach((section, index) => {
+                if (index === taskIndex) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+        }
+
+        function updateDashboard() {
+            const students = Array.from(studentsData.values());
+            const total = students.length;
+            if (total === 0) return;
+
+            const passwordChanged = students.filter(s => s.passwordChanged).length;
+            const phishingIdentified = students.filter(s => s.phishingIdentified).length;
+            const completed = students.filter(s => s.ratings && s.ratings.reduce((a,b) => a+b, 0) > 0).length;
+            const securityCount = students.filter(s => s.securityFeatures && s.securityFeatures.filter(Boolean).length >= 3).length;
+
+            document.getElementById('totalStudents').textContent = total;
+            document.getElementById('safeStudents').textContent = securityCount;
+            document.getElementById('completionRate').textContent = Math.round((completed / total) * 100) + '%';
+
+            // Task 1: Password Security data
+            const strongPassword = students.filter(s => s.passwordChanged && s.passwordStrength === 'strong').length;
+
+            document.getElementById('task1_passwordChanged').textContent = passwordChanged;
+            document.getElementById('task1_passwordPercent').textContent = Math.round((passwordChanged / total) * 100) + '%';
+            document.getElementById('task1_strongPassword').textContent = strongPassword;
+            document.getElementById('task1_strongPercent').textContent =
+                passwordChanged > 0 ? Math.round((strongPassword / passwordChanged) * 100) + '%' : '0%';
+            document.getElementById('task1_avgTime').textContent = '2-5';
+            document.getElementById('task1_completion').textContent = Math.round((passwordChanged / total) * 100) + '%';
+            document.getElementById('task1_completedCount').textContent = passwordChanged;
+
+            // Task 2: Phishing Identification data
+            const totalMistakes = students.reduce((sum, s) => sum + (s.phishingMistakes || 0), 0);
+            const accuracy = phishingIdentified > 0 ? Math.round((phishingIdentified / total) * 100) : 0;
+
+            document.getElementById('task2_phishingIdentified').textContent = phishingIdentified;
+            document.getElementById('task2_phishingPercent').textContent = Math.round((phishingIdentified / total) * 100) + '%';
+            document.getElementById('task2_mistakes').textContent = totalMistakes;
+            document.getElementById('task2_avgMistakes').textContent =
+                total > 0 ? (totalMistakes / total).toFixed(1) : '0';
+            document.getElementById('task2_accuracy').textContent = accuracy + '%';
+            document.getElementById('task2_completion').textContent = Math.round((phishingIdentified / total) * 100) + '%';
+            document.getElementById('task2_completedCount').textContent = phishingIdentified;
+
+            // Task 3: Security Center data
+            const securityUsers = students.filter(s => s.securityFeatures && s.securityFeatures.filter(Boolean).length > 0).length;
+            const totalFeatures = students.reduce((sum, s) => {
+                return sum + (s.securityFeatures ? s.securityFeatures.filter(Boolean).length : 0);
+            }, 0);
+            const avgFeatures = total > 0 ? (totalFeatures / total).toFixed(1) : '0';
+            const totalQuizScore = students.reduce((sum, s) => sum + (s.quizScore || 0), 0);
+            const avgQuiz = total > 0 ? (totalQuizScore / total).toFixed(1) : '0';
+            const securityCompleted = students.filter(s => s.securityFeatures && s.securityFeatures.filter(Boolean).length >= 2).length;
+
+            document.getElementById('task3_securityUsers').textContent = securityUsers;
+            document.getElementById('task3_securityPercent').textContent = Math.round((securityUsers / total) * 100) + '%';
+            document.getElementById('task3_avgFeatures').textContent = avgFeatures;
+            document.getElementById('task3_totalFeatures').textContent = totalFeatures;
+            document.getElementById('task3_avgQuiz').textContent = avgQuiz;
+            document.getElementById('task3_completion').textContent = Math.round((securityCompleted / total) * 100) + '%';
+            document.getElementById('task3_completedCount').textContent = securityCompleted;
+
+            // Task 4: Evaluation data
+            const withRatings = students.filter(s => s.ratings && s.ratings.reduce((a,b) => a+b, 0) > 0).length;
+            const totalRatingSum = students.reduce((sum, s) => {
+                return sum + (s.ratings ? s.ratings.reduce((a,b) => a+b, 0) : 0);
+            }, 0);
+            const avgRating = withRatings > 0 ? (totalRatingSum / withRatings).toFixed(1) : '0';
+            const achievers = students.filter(s => s.ratings && s.ratings.reduce((a,b) => a+b, 0) >= 5).length;
+
+            document.getElementById('task4_ratedStudents').textContent = withRatings;
+            document.getElementById('task4_ratedPercent').textContent = Math.round((withRatings / total) * 100) + '%';
+            document.getElementById('task4_avgRating').textContent = avgRating;
+            document.getElementById('task4_totalRating').textContent = totalRatingSum;
+            document.getElementById('task4_achievers').textContent = achievers;
+            document.getElementById('task4_completion').textContent = Math.round((withRatings / total) * 100) + '%';
+            document.getElementById('task4_completedCount').textContent = withRatings;
+
+            // Update star distribution
+            updateStarDistribution(students);
+        }
+
+        function updateStarDistribution(students) {
+            let count1 = 0, count2 = 0, count3 = 0, countAbove5 = 0;
+
+            students.forEach(student => {
+                if (!student.ratings) return;
+
+                const total = student.ratings.reduce((a,b) => a+b, 0);
+                if (total >= 5) countAbove5++;
+
+                student.ratings.forEach(rating => {
+                    if (rating === 1) count1++;
+                    else if (rating === 2) count2++;
+                    else if (rating === 3) count3++;
+                });
+            });
+
+            document.getElementById('stars1').textContent = count1;
+            document.getElementById('stars2').textContent = count2;
+            document.getElementById('stars3').textContent = count3;
+            document.getElementById('starsAbove5').textContent = countAbove5;
+        }
+
+        function exportData() {
+            const students = Array.from(studentsData.values());
+            let csv = '用户名,密码安全,防骗意识,测试得分,安全功能数,评价总分,安全状态\n';
+            students.forEach(s => {
+                const totalStars = s.ratings.reduce((a,b) => a+b, 0);
+                const secCount = s.securityFeatures.filter(Boolean).length;
+                let status = secCount >= 3 ? '高' : s.passwordChanged ? '中' : '低';
+                csv += `${s.username || '未知'},${s.passwordChanged ? '是' : '否'},${s.phishingIdentified ? '是' : '否'},${s.quizScore},${secCount},${totalStars},${status}\n`;
+            });
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `第三课数据_${new Date().toLocaleDateString('zh-CN')}.csv`;
+            link.click();
+        }
+
+        window.onload = () => console.log('教师控制台已就绪');
+    </script>
+</body>
+</html>

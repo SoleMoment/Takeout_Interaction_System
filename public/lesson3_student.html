@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第二课：守护外卖账号</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f5f5f5;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            background: transparent;
+            font-size: 16px;
+        }
+
+        .tab:hover:not(.locked) {
+            background: #e0e0e0;
+        }
+
+        .tab.active {
+            background: white;
+            color: #f5576c;
+            font-weight: bold;
+        }
+
+        .tab.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .tab.locked::after {
+            content: '🔒';
+            margin-left: 8px;
+        }
+
+        .tab.unlocked::after {
+            content: '✓';
+            margin-left: 8px;
+            color: #4caf50;
+        }
+
+        .content {
+            padding: 40px;
+            min-height: 500px;
+        }
+
+        .task-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        .task-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-box {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #f9f9f9;
+            border-radius: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #f5576c;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .alert {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            animation: bounceIn 0.6s;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .alert-danger {
+            background: #ffebee;
+            border: 2px solid #f44336;
+            color: #c62828;
+        }
+
+        .alert-warning {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            color: #e65100;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            color: #2e7d32;
+        }
+
+        .alert-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .password-strength {
+            margin-top: 10px;
+            height: 10px;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .password-strength-fill {
+            height: 100%;
+            transition: all 0.3s;
+        }
+
+        .strength-weak {
+            width: 33%;
+            background: #f44336;
+        }
+
+        .strength-medium {
+            width: 66%;
+            background: #ff9800;
+        }
+
+        .strength-strong {
+            width: 100%;
+            background: #4caf50;
+        }
+
+        .password-tips {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .password-tips ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .password-tips li {
+            margin-bottom: 8px;
+        }
+
+        .check {
+            color: #4caf50;
+        }
+
+        .cross {
+            color: #f44336;
+        }
+
+        .fullscreen-warning {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(244, 67, 54, 0.98);
+            color: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: warningPulse 1s infinite;
+        }
+
+        .fullscreen-warning.active {
+            display: flex;
+        }
+
+        @keyframes warningPulse {
+            0%, 100% { background: rgba(244, 67, 54, 0.98); }
+            50% { background: rgba(244, 67, 54, 1); }
+        }
+
+        .warning-content {
+            text-align: center;
+            padding: 60px;
+        }
+
+        .warning-content .icon {
+            font-size: 120px;
+            margin-bottom: 30px;
+            animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .warning-content h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-container {
+            margin-top: 30px;
+        }
+
+        .quiz-question {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .quiz-option:hover {
+            border-color: #f5576c;
+            background: #fff0f2;
+        }
+
+        .quiz-option.selected {
+            border-color: #f5576c;
+            background: #fff0f2;
+        }
+
+        .quiz-option.correct {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .quiz-option.incorrect {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .security-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .security-card {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .security-card:hover {
+            border-color: #f5576c;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .security-card.enabled {
+            border-color: #4caf50;
+            background: #e8f5e9;
+        }
+
+        .security-card .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4caf50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .evaluation-grid {
+            display: grid;
+            gap: 25px;
+        }
+
+        .eval-item {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .star-option {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .star-option:hover {
+            border-color: #f5576c;
+            background: #fff0f2;
+        }
+
+        .star-option.selected {
+            border-color: #ffc107;
+            background: #fff9e6;
+        }
+
+        .achievement-badge {
+            text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            margin-top: 30px;
+            animation: bounceIn 0.8s;
+        }
+
+        .achievement-badge .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: bounceIn 0.5s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .btn-secondary {
+            background: #fff;
+            color: #f5576c;
+            border: 2px solid #f5576c;
+        }
+    </style>
+<script src="/websocket-client.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ 守护外卖账号</h1>
+            <p>校园外卖守护大作战 - 第二课</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(0)">任务一：密码安全</button>
+            <button class="tab locked" id="tab1" onclick="switchTab(1)">任务二：识别陷阱</button>
+            <button class="tab locked" id="tab2" onclick="switchTab(2)">任务三：安全中心</button>
+            <button class="tab locked" id="tab3" onclick="switchTab(3)">任务四：自我评价</button>
+        </div>
+
+        <div class="content">
+            <!-- Task 1: Password Security -->
+            <div class="task-section active" id="task0">
+                <h2>🔐 密码安全体验</h2>
+                <p style="margin: 20px 0; color: #666;">登录你的外卖账号，体验密码安全的重要性</p>
+                
+                <div class="login-box">
+                    <div id="loginForm">
+                        <div class="form-group">
+                            <label for="loginUsername">用户名</label>
+                            <input type="text" id="loginUsername" placeholder="请输入用户名">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="loginPassword">密码</label>
+                            <input type="password" id="loginPassword" placeholder="请输入密码" value="">
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="attemptLogin()" style="width: 100%;">登录</button>
+                    </div>
+
+                    <div id="alertArea" class="hidden"></div>
+
+                    <div id="changePasswordForm" class="hidden">
+                        <h3 style="margin-bottom: 20px; color: #f5576c;">⚠️ 立即修改密码</h3>
+                        
+                        <div class="form-group">
+                            <label for="newPassword">新密码（至少8位，包含数字和字母）</label>
+                            <input type="text" id="newPassword" placeholder="例如：abc12345" oninput="checkPasswordStrength()">
+                            <div class="password-strength">
+                                <div class="password-strength-fill" id="strengthBar"></div>
+                            </div>
+                            <div style="margin-top: 5px; font-size: 14px;" id="strengthText"></div>
+                        </div>
+
+                        <div class="password-tips">
+                            <strong>密码强度检测：</strong>
+                            <ul id="passwordChecks">
+                                <li id="check1"><span class="cross">✗</span> 至少8个字符</li>
+                                <li id="check2"><span class="cross">✗</span> 包含字母</li>
+                                <li id="check3"><span class="cross">✗</span> 包含数字</li>
+                            </ul>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirmPassword">确认密码</label>
+                            <input type="text" id="confirmPassword" placeholder="请再次输入新密码">
+                        </div>
+                        
+                        <button class="btn btn-success" onclick="changePassword()" style="width: 100%;">确认修改</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task 2: Phishing Trap -->
+            <div class="task-section" id="task1">
+                <h2>🎣 识别诈骗陷阱</h2>
+                <p style="margin: 20px 0; color: #666;">学会识别虚假通知和诈骗链接</p>
+                
+                <div style="max-width: 600px; margin: 0 auto;">
+                    <div class="alert alert-warning">
+                        <div class="alert-icon">📱</div>
+                        <h3 style="margin-bottom: 15px;">系统通知</h3>
+                        <p style="font-size: 16px; line-height: 1.6;">
+                            尊敬的用户您好：<br><br>
+                            您的外卖订单在配送过程中丢失，我们深表歉意。为了补偿您的损失，我们将为您退款并赠送50元优惠券。<br><br>
+                            <strong>请立即点击下方链接领取赔偿：</strong><br>
+                            <span style="color: #2196f3; text-decoration: underline;">http://tkout-refund.xyz/claim?id=123456</span>
+                        </p>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 25px;">
+                            <button class="btn btn-danger" onclick="clickClaim()" style="flex: 1;">点击领取</button>
+                            <button class="btn btn-success" onclick="clickReport()" style="flex: 1;">举报欺诈</button>
+                        </div>
+                    </div>
+
+                    <div id="quizSection" class="hidden">
+                        <div class="alert alert-success">
+                            <div class="alert-icon">✅</div>
+                            <h3>做得好！你正确识别了诈骗陷阱！</h3>
+                            <p style="margin-top: 10px;">下面来回答几个问题，巩固你的防骗知识：</p>
+                        </div>
+
+                        <div class="quiz-container">
+                            <div class="quiz-question">
+                                <h4>1. 如何识别诈骗信息？</h4>
+                                <div class="quiz-options">
+                                    <div class="quiz-option" onclick="selectAnswer(0, 0)">
+                                        检查发送方是否为官方账号
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(0, 1)">
+                                        看消息内容是否有紧迫感
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(0, 2)">
+                                        检查链接是否为官方域名
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(0, 3)">
+                                        以上都是
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quiz-question">
+                                <h4>2. 收到可疑链接时应该怎么做？</h4>
+                                <div class="quiz-options">
+                                    <div class="quiz-option" onclick="selectAnswer(1, 0)">
+                                        立即点击查看
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(1, 1)">
+                                        不点击，向官方客服核实
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(1, 2)">
+                                        转发给朋友一起看
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="quiz-question">
+                                <h4>3. 真正的平台客服会要求你提供什么？</h4>
+                                <div class="quiz-options">
+                                    <div class="quiz-option" onclick="selectAnswer(2, 0)">
+                                        登录密码
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(2, 1)">
+                                        验证码
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(2, 2)">
+                                        银行卡密码
+                                    </div>
+                                    <div class="quiz-option" onclick="selectAnswer(2, 3)">
+                                        以上都不会要求
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary" onclick="submitQuiz()">提交答案</button>
+                        </div>
+
+                        <div id="quizResult" class="hidden"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task 3: Security Center -->
+            <div class="task-section" id="task2">
+                <h2>🔒 安全中心</h2>
+                <p style="margin: 20px 0; color: #666;">为你的账号添加多重防护措施</p>
+                
+                <div class="security-features">
+                    <div class="security-card" id="feature1">
+                        <div class="icon">📱</div>
+                        <h4>短信验证</h4>
+                        <p>登录时需要输入手机验证码</p>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleFeature(1)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="security-card" id="feature2">
+                        <div class="icon">🔔</div>
+                        <h4>登录提醒</h4>
+                        <p>异地登录或新设备登录时发送通知</p>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleFeature(2)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="security-card" id="feature3">
+                        <div class="icon">🔐</div>
+                        <h4>支付密码</h4>
+                        <p>设置独立的支付密码</p>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleFeature(3)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="security-card" id="feature4">
+                        <div class="icon">📧</div>
+                        <h4>邮箱绑定</h4>
+                        <p>绑定邮箱用于找回密码</p>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleFeature(4)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="security-card" id="feature5">
+                        <div class="icon">⏰</div>
+                        <h4>自动登出</h4>
+                        <p>长时间未操作自动退出</p>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleFeature(5)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="security-card" id="feature6">
+                        <div class="icon">🚫</div>
+                        <h4>黑名单管理</h4>
+                        <p>拉黑骚扰用户</p>
+                        <label class="toggle-switch">
+                            <input type="checkbox" onchange="toggleFeature(6)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-top: 40px; text-align: center;">
+                    <div style="font-size: 24px; margin-bottom: 15px;">
+                        安全等级：<strong id="securityLevel" style="color: #f5576c;">基础</strong>
+                    </div>
+                    <div style="width: 80%; margin: 0 auto;">
+                        <div style="height: 12px; background: #eee; border-radius: 6px; overflow: hidden;">
+                            <div id="securityProgress" style="height: 100%; width: 0%; background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%); transition: width 0.3s;"></div>
+                        </div>
+                    </div>
+                    <p style="margin-top: 15px; color: #666;">
+                        已启用 <strong id="enabledCount">0</strong> / 6 项安全功能
+                    </p>
+                </div>
+            </div>
+
+            <!-- Task 4: Evaluation -->
+            <div class="task-section" id="task3">
+                <h2>📊 自我评价</h2>
+                <p style="margin: 20px 0; color: #666;">根据你的学习体验，为自己打分吧！</p>
+                
+                <div class="evaluation-grid">
+                    <div class="eval-item">
+                        <h3>任务一：密码安全意识</h3>
+                        <p>我理解密码强度的重要性，能够设置安全的密码</p>
+                        <div class="star-rating">
+                            <div class="star-option" onclick="selectRating(0, 1)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐</div>
+                                <div>需要帮助</div>
+                            </div>
+                            <div class="star-option" onclick="selectRating(0, 2)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐⭐</div>
+                                <div>基本掌握</div>
+                            </div>
+                            <div class="star-option" onclick="selectRating(0, 3)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐⭐⭐</div>
+                                <div>熟练掌握</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="eval-item">
+                        <h3>任务二：诈骗识别能力</h3>
+                        <p>我能够识别常见的网络诈骗和钓鱼陷阱</p>
+                        <div class="star-rating">
+                            <div class="star-option" onclick="selectRating(1, 1)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐</div>
+                                <div>需要帮助</div>
+                            </div>
+                            <div class="star-option" onclick="selectRating(1, 2)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐⭐</div>
+                                <div>基本掌握</div>
+                            </div>
+                            <div class="star-option" onclick="selectRating(1, 3)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐⭐⭐</div>
+                                <div>熟练掌握</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="eval-item">
+                        <h3>任务三：安全防护实践</h3>
+                        <p>我知道如何为账号添加多重安全防护措施</p>
+                        <div class="star-rating">
+                            <div class="star-option" onclick="selectRating(2, 1)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐</div>
+                                <div>需要帮助</div>
+                            </div>
+                            <div class="star-option" onclick="selectRating(2, 2)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐⭐</div>
+                                <div>基本掌握</div>
+                            </div>
+                            <div class="star-option" onclick="selectRating(2, 3)">
+                                <div style="font-size: 24px; margin-bottom: 8px;">⭐⭐⭐</div>
+                                <div>熟练掌握</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn btn-primary" onclick="submitEvaluation()">提交评价</button>
+                </div>
+
+                <div id="achievementBadge" class="hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div class="modal" id="messageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="messageTitle">提示</h3>
+                <button class="modal-close" onclick="closeMessageModal()">×</button>
+            </div>
+            <div id="messageContent" style="line-height: 1.8; color: #666;"></div>
+            <div style="margin-top: 25px; text-align: center;">
+                <button class="btn btn-primary" onclick="closeMessageModal()" id="messageBtn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Warning -->
+    <div class="fullscreen-warning" id="warningScreen">
+        <div class="warning-content">
+            <div class="icon">⚠️</div>
+            <h1>危险！账号被盗风险</h1>
+            <p style="font-size: 24px; margin: 20px 0;">点击陌生链接可能导致：</p>
+            <ul style="text-align: left; font-size: 20px; margin: 20px auto; max-width: 500px;">
+                <li>账号密码被窃取</li>
+                <li>个人信息泄露</li>
+                <li>资金被盗用</li>
+                <li>恶意软件感染</li>
+            </ul>
+            <button class="btn btn-primary" onclick="closeWarning()" style="font-size: 20px; padding: 15px 40px;">我知道了</button>
+        </div>
+    </div>
+
+    <script>
+        let userData = {
+            username: '',
+            password: '123456',
+            securityFeatures: [false, false, false, false, false, false],
+            quizAnswers: [-1, -1, -1],
+            quizScore: 0,
+            ratings: [0, 0, 0],
+            passwordChanged: false,
+            phishingIdentified: false
+        };
+
+        const correctAnswers = [3, 1, 3];
+        // const channel = null // WebSocket替代;
+
+        // Listen for teacher commands
+        window.classroomWS.onMessage((data) => {
+            if (data.type === 'unlock_task') {
+                const tab = document.getElementById(`tab${data.taskIndex}`);
+                if (tab) {
+                    tab.classList.remove('locked');
+                    tab.classList.add('unlocked');
+                }
+            } else if (data.type === 'lock_task') {
+                const tab = document.getElementById(`tab${data.taskIndex}`);
+                if (tab) {
+                    tab.classList.add('locked');
+                    tab.classList.remove('unlocked');
+                }
+            }
+        });
+
+        async function loadData() {
+            // 尝试从服务器加载数据
+            try {
+                const username = userData.username || localStorage.getItem('tempUsername');
+                if (username) {
+                    const response = await fetch(`/api/load-student-data/lesson2/${username}`);
+                    const result = await response.json();
+
+                    if (result.exists && result.data) {
+                        userData = result.data;
+                        updateSecurityLevel();
+                        console.log('✓ 从服务器加载数据成功');
+                    } else {
+                        console.log('⚠ 服务器无数据，使用默认数据');
+                    }
+                }
+
+                // 如果还没有用户名，尝试从lesson1继承
+                if (!userData.username) {
+                    try {
+                        const storedUsername = localStorage.getItem('tempUsername');
+                        if (storedUsername) {
+                            const lesson1Response = await fetch(`/api/load-student-data/lesson1/${storedUsername}`);
+                            const lesson1Result = await lesson1Response.json();
+                            if (lesson1Result.exists && lesson1Result.data) {
+                                userData.username = lesson1Result.data.username;
+                            }
+                        }
+                    } catch (err) {
+                        console.log('⚠ 无法加载lesson1数据');
+                    }
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                // 如果服务器请求失败，尝试从localStorage加载（兼容性）
+                const saved = localStorage.getItem('lesson3User');
+                if (saved) {
+                    userData = JSON.parse(saved);
+                    updateSecurityLevel();
+                    console.log('⚠ 从localStorage加载数据（兼容模式）');
+                }
+            }
+        }
+
+        async function saveData() {
+            // 保存到服务器
+            try {
+                if (userData.username) {
+                    const response = await fetch(`/api/save-student-data/lesson2/${userData.username}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        console.log('✓ 数据保存到服务器成功');
+                    }
+                } else {
+                    // 如果还没有用户名，暂存到localStorage
+                    localStorage.setItem('lesson3User', JSON.stringify(userData));
+                }
+            } catch (error) {
+                console.error('保存数据失败:', error);
+                // 保存失败时使用localStorage作为备份
+                localStorage.setItem('lesson3User', JSON.stringify(userData));
+                console.log('⚠ 数据保存到localStorage（备份模式）');
+            }
+
+            window.classroomWS.send({
+                type: 'student_data',
+                data: userData
+            });
+        }
+
+        // Task 1: Password Security
+        function attemptLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username) {
+                showMessageModal('提示', '请输入用户名！');
+                return;
+            }
+
+            userData.username = username;
+            document.getElementById('loginForm').classList.add('hidden');
+
+            showAlert('danger',
+                '⚠️ 安全警告',
+                `检测到你的密码过于简单（${password}），已被黑客破解！<br><br>
+                你的积分已被清空，账号面临被盗风险。<br><br>
+                <strong>请立即修改为更安全的密码！</strong><br><br>
+                <button class="btn btn-primary" onclick="showChangePasswordForm()" style="margin-top: 20px; font-size: 16px;">立即修改密码</button>`
+            );
+        }
+
+        function showChangePasswordForm() {
+            document.getElementById('alertArea').classList.add('hidden');
+            document.getElementById('changePasswordForm').classList.remove('hidden');
+        }
+
+        function showAlert(type, title, message) {
+            const alertArea = document.getElementById('alertArea');
+            alertArea.className = `alert alert-${type}`;
+            alertArea.innerHTML = `
+                <div class="alert-icon">${type === 'danger' ? '🚨' : type === 'success' ? '✅' : '⚠️'}</div>
+                <h3 style="margin-bottom: 15px;">${title}</h3>
+                <p style="line-height: 1.6;">${message}</p>
+            `;
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('newPassword').value;
+            const checks = {
+                length: password.length >= 8,
+                hasLetter: /[a-zA-Z]/.test(password),
+                hasNumber: /[0-9]/.test(password)
+            };
+
+            document.getElementById('check1').innerHTML = 
+                `<span class="${checks.length ? 'check' : 'cross'}">${checks.length ? '✓' : '✗'}</span> 至少8个字符`;
+            document.getElementById('check2').innerHTML = 
+                `<span class="${checks.hasLetter ? 'check' : 'cross'}">${checks.hasLetter ? '✓' : '✗'}</span> 包含字母`;
+            document.getElementById('check3').innerHTML = 
+                `<span class="${checks.hasNumber ? 'check' : 'cross'}">${checks.hasNumber ? '✓' : '✗'}</span> 包含数字`;
+
+            const score = Object.values(checks).filter(Boolean).length;
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+
+            if (score <= 1) {
+                strengthBar.className = 'password-strength-fill strength-weak';
+                strengthText.textContent = '密码强度：弱';
+                strengthText.style.color = '#f44336';
+            } else if (score === 2) {
+                strengthBar.className = 'password-strength-fill strength-medium';
+                strengthText.textContent = '密码强度：中';
+                strengthText.style.color = '#ff9800';
+            } else {
+                strengthBar.className = 'password-strength-fill strength-strong';
+                strengthText.textContent = '密码强度：强';
+                strengthText.style.color = '#4caf50';
+            }
+
+            return score;
+        }
+
+        function changePassword() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (!newPassword || !confirmPassword) {
+                showMessageModal('提示', '请填写完整的密码信息！');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                showMessageModal('提示', '两次输入的密码不一致！');
+                return;
+            }
+
+            const strength = checkPasswordStrength();
+            if (strength < 3) {
+                showMessageModal('提示', '密码强度不够，请设置更强的密码！<br><br>提示：密码需要至少8位，包含字母和数字');
+                return;
+            }
+
+            userData.password = newPassword;
+            userData.passwordChanged = true;
+            saveData();
+
+            document.getElementById('changePasswordForm').classList.add('hidden');
+            showAlert('success',
+                '✅ 密码修改成功',
+                '恭喜！你已成功设置了一个强密码。<br><br>记住：<br>• 不要将密码告诉任何人<br>• 定期更换密码<br>• 不同账号使用不同密码'
+            );
+
+            document.getElementById('alertArea').classList.remove('hidden');
+        }
+
+        // Task 2
+        function clickClaim() {
+            document.getElementById('warningScreen').classList.add('active');
+        }
+
+        function closeWarning() {
+            document.getElementById('warningScreen').classList.remove('active');
+        }
+
+        function clickReport() {
+            userData.phishingIdentified = true;
+            saveData();
+            document.querySelector('.alert-warning').classList.add('hidden');
+            document.getElementById('quizSection').classList.remove('hidden');
+        }
+
+        function selectAnswer(questionIndex, answerIndex) {
+            userData.quizAnswers[questionIndex] = answerIndex;
+            const question = document.querySelectorAll('.quiz-question')[questionIndex];
+            const options = question.querySelectorAll('.quiz-option');
+            options.forEach((opt, idx) => {
+                opt.classList.toggle('selected', idx === answerIndex);
+            });
+        }
+
+        function submitQuiz() {
+            if (userData.quizAnswers.includes(-1)) {
+                showMessageModal('提示', '请回答所有问题！');
+                return;
+            }
+
+            let score = 0;
+            userData.quizAnswers.forEach((answer, index) => {
+                const question = document.querySelectorAll('.quiz-question')[index];
+                const options = question.querySelectorAll('.quiz-option');
+                
+                if (answer === correctAnswers[index]) {
+                    score++;
+                    options[answer].classList.add('correct');
+                } else {
+                    options[answer].classList.add('incorrect');
+                    options[correctAnswers[index]].classList.add('correct');
+                }
+            });
+
+            userData.quizScore = score;
+            saveData();
+
+            const resultDiv = document.getElementById('quizResult');
+            resultDiv.className = `alert ${score === 3 ? 'alert-success' : 'alert-warning'}`;
+            resultDiv.innerHTML = `
+                <div class="alert-icon">${score === 3 ? '🎉' : '📚'}</div>
+                <h3>测试完成！</h3>
+                <p>你答对了 ${score} / 3 题</p>
+            `;
+            resultDiv.classList.remove('hidden');
+        }
+
+        // Task 3
+        function toggleFeature(featureId) {
+            userData.securityFeatures[featureId - 1] = !userData.securityFeatures[featureId - 1];
+            
+            const card = document.getElementById(`feature${featureId}`);
+            card.classList.toggle('enabled', userData.securityFeatures[featureId - 1]);
+
+            updateSecurityLevel();
+            saveData();
+        }
+
+        function updateSecurityLevel() {
+            const enabledCount = userData.securityFeatures.filter(Boolean).length;
+            document.getElementById('enabledCount').textContent = enabledCount;
+            
+            const percentage = (enabledCount / 6) * 100;
+            document.getElementById('securityProgress').style.width = percentage + '%';
+
+            const levelText = document.getElementById('securityLevel');
+            if (enabledCount <= 2) {
+                levelText.textContent = '基础';
+                levelText.style.color = '#f44336';
+            } else if (enabledCount <= 4) {
+                levelText.textContent = '中等';
+                levelText.style.color = '#ff9800';
+            } else {
+                levelText.textContent = '高级';
+                levelText.style.color = '#4caf50';
+            }
+        }
+
+        // Task 4
+        function selectRating(taskIndex, stars) {
+            userData.ratings[taskIndex] = stars;
+            const evalItem = document.querySelectorAll('.eval-item')[taskIndex];
+            const options = evalItem.querySelectorAll('.star-option');
+            options.forEach((option, index) => {
+                option.classList.toggle('selected', index === stars - 1);
+            });
+            saveData();
+        }
+
+        function submitEvaluation() {
+            const total = userData.ratings.reduce((sum, rating) => sum + rating, 0);
+            if (total === 0) {
+                showMessageModal('提示', '请至少完成一项评价！');
+                return;
+            }
+
+            saveData();
+
+            if (total >= 5) {
+                const badge = document.getElementById('achievementBadge');
+                badge.className = 'achievement-badge';
+                badge.innerHTML = `
+                    <div class="icon">🛡️</div>
+                    <h2>恭喜你获得"安全卫士"称号！</h2>
+                    <p style="font-size: 18px; margin-top: 10px;">总评分：${total}星</p>
+                `;
+            } else {
+                showMessageModal('评价已提交', `评价已提交！总分：${total}星`);
+            }
+        }
+
+        function switchTab(index) {
+            const tabs = document.querySelectorAll('.tab');
+            const sections = document.querySelectorAll('.task-section');
+
+            if (tabs[index].classList.contains('locked')) {
+                showMessageModal('提示', '该任务尚未解锁，请等待老师解锁！');
+                return;
+            }
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            sections.forEach(section => section.classList.remove('active'));
+
+            tabs[index].classList.add('active');
+            sections[index].classList.add('active');
+        }
+
+        // Message Modal Functions
+        let modalCallback = null;
+
+        function showMessageModal(title, content, callback) {
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageContent').innerHTML = content;
+            document.getElementById('messageModal').classList.add('active');
+            modalCallback = callback;
+        }
+
+        function closeMessageModal() {
+            document.getElementById('messageModal').classList.remove('active');
+            if (modalCallback) {
+                modalCallback();
+                modalCallback = null;
+            }
+        }
+
+        window.onload = async function() {
+            await loadData();
+            updateSecurityLevel();
+        };
+    </script>
+</body>
+</html>

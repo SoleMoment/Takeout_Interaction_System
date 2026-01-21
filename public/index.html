@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园外卖守护大作战 - 教学系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+            animation: fadeIn 0.8s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 15px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 20px;
+            opacity: 0.95;
+        }
+
+        .courses {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+            animation: slideUp 0.6s;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .course-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .course-card h2 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .course-card .icon {
+            font-size: 48px;
+        }
+
+        .course-card p {
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .links {
+            display: grid;
+            gap: 15px;
+        }
+
+        .link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 25px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .link-btn.student {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .link-btn.student:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .link-btn.teacher {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .link-btn.teacher:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        .link-btn .arrow {
+            font-size: 24px;
+        }
+
+        .info-box {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+
+        .info-box ul {
+            list-style: none;
+        }
+
+        .info-box li {
+            padding: 10px 0;
+            color: #555;
+            font-size: 16px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-box li:last-child {
+            border-bottom: none;
+        }
+
+        .info-box li strong {
+            color: #333;
+            margin-right: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 768px) {
+            .courses {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 32px;
+            }
+            
+            .link-btn {
+                font-size: 16px;
+                padding: 15px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 校园外卖守护大作战</h1>
+            <p>信息科技互动教学系统</p>
+        </div>
+
+        <div class="courses">
+            <div class="course-card" style="animation-delay: 0.1s;">
+                <h2>
+                    <span class="icon">🍔</span>
+                    <span>第一课：我的专属外卖账号</span>
+                </h2>
+                <p>学习注册外卖账号、完成点餐流程、管理积分权益，掌握数字身份的基本概念。</p>
+                
+                <div class="links">
+                    <a href="/lesson1/student" class="link-btn student">
+                        <span>👨‍🎓 学生端入口</span>
+                        <span class="arrow">→</span>
+                    </a>
+                    <a href="/lesson1/teacher" class="link-btn teacher">
+                        <span>👨‍🏫 教师端控制台</span>
+                        <span class="arrow">→</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="course-card" style="animation-delay: 0.2s;">
+                <h2>
+                    <span class="icon">🛡️</span>
+                    <span>第三课：守护外卖账号</span>
+                </h2>
+                <p>学习密码安全、识别网络诈骗、设置账号防护，培养网络安全意识。</p>
+                
+                <div class="links">
+                    <a href="/lesson3/student" class="link-btn student">
+                        <span>👨‍🎓 学生端入口</span>
+                        <span class="arrow">→</span>
+                    </a>
+                    <a href="/lesson3/teacher" class="link-btn teacher">
+                        <span>👨‍🏫 教师端控制台</span>
+                        <span class="arrow">→</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>
+                <span class="status-indicator"></span>
+                系统信息
+            </h3>
+            <ul>
+                <li><strong>服务器状态:</strong> 运行中</li>
+                <li><strong>访问方式:</strong> 浏览器输入 http://[教师机IP]:3000</li>
+                <li><strong>学生访问:</strong> 点击"学生端入口"进入学习</li>
+                <li><strong>教师控制:</strong> 点击"教师端控制台"查看数据和控制任务</li>
+                <li><strong>数据同步:</strong> 实时通信（WebSocket）</li>
+                <li><strong>支持浏览器:</strong> Chrome, Edge, Firefox 最新版</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // 检测WebSocket连接
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        
+        try {
+            const ws = new WebSocket(wsUrl);
+            ws.onopen = () => {
+                console.log('✅ WebSocket连接成功');
+            };
+            ws.onerror = () => {
+                console.warn('⚠️ WebSocket连接失败，请检查服务器');
+            };
+        } catch (error) {
+            console.error('WebSocket初始化失败:', error);
+        }
+    </script>
+</body>
+</html>
